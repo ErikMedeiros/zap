@@ -17,8 +17,8 @@ pub fn main() !void {
 
     for (tokens.items) |token| {
         try switch (token) {
-            .parameter => |param| stdout.print("[PARAMETER]: {s} = {?s}\n", .{ param.name, param.value }),
-            .positional => |pos| stdout.print("[POSITIONAL]: {s}\n", .{pos.value}),
+            .parameter => |p| stdout.print("[PARAMETER]: {s}\n", .{p.name}),
+            .value => |v| stdout.print("[POSITIONAL]: {s}\n", .{v}),
         };
     }
 
