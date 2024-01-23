@@ -1,5 +1,6 @@
 const std = @import("std");
 const lexer = @import("lexer.zig");
+const ArgIterator = @import("iterator.zig").ArgIterator;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -7,9 +8,9 @@ pub fn main() !void {
 
     var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
-    var iterator = lexer.ArgIterator.initStd(&args);
+    var args_it = ArgIterator.init(&args);
 
-    const tokens = try lexer.tokenize(&iterator, allocator);
+    const tokens = try lexer.tokenize(&args_it.iterator, allocator);
 
     const writter = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(writter);
@@ -27,5 +28,5 @@ pub fn main() !void {
 }
 
 test {
-    _ = lexer;
+    std.testing.refAllDecls(@This());
 }

@@ -1,4 +1,5 @@
 const std = @import("std");
+const it = @import("iterator.zig");
 
 pub const Token = union(enum) {
     value: []const u8,
@@ -6,10 +7,10 @@ pub const Token = union(enum) {
     parameter: struct { name: []const u8 },
 };
 
-pub fn tokenize(args: *ArgIterator, allocator: std.mem.Allocator) std.mem.Allocator.Error!std.ArrayList(Token) {
+pub fn tokenize(args: *it.Iterator([:0]const u8), allocator: std.mem.Allocator) std.mem.Allocator.Error!std.ArrayList(Token) {
     var tokens = std.ArrayList(Token).init(allocator);
 
-    while (args.readNext()) |arg| {
+    while (args.next()) |arg| {
         try switch (arg[0]) {
             '-' => switch (arg[1]) {
                 '-' => parseLongParam(arg[2..], &tokens),
@@ -44,47 +45,9 @@ fn parseShortParam(argument: []const u8, tokens: *std.ArrayList(Token)) std.mem.
     }
 }
 
-pub const ArgIterator = struct {
-    inner: ArgIterator.Type,
-    index: u32 = 0,
-
-    pub const Type = union(enum) {
-        std: std.process.ArgIterator,
-        string: []const [:0]const u8,
-    };
-
-    pub fn initStd(args: *std.process.ArgIterator) ArgIterator {
-        return ArgIterator{ .inner = .{ .std = args.* } };
-    }
-
-    pub fn initString(args: []const [:0]const u8) ArgIterator {
-        return ArgIterator{ .inner = .{ .string = args } };
-    }
-
-    fn readNext(self: *ArgIterator) ?[:0]const u8 {
-        const next = switch (self.inner) {
-            .std => |*args| args.next(),
-            .string => |arr| if (self.index >= arr.len) null else arr[self.index],
-        };
-
-        self.index += 1;
-        return next;
-    }
-};
-
-test ArgIterator {
-    var iterator = ArgIterator.initString(&.{ "path/to/bin", "positional", "--flag", "-s" });
-
-    try std.testing.expectEqualSentinel(u8, 0, "path/to/bin", iterator.readNext().?);
-    try std.testing.expectEqualSentinel(u8, 0, "positional", iterator.readNext().?);
-    try std.testing.expectEqualSentinel(u8, 0, "--flag", iterator.readNext().?);
-    try std.testing.expectEqualSentinel(u8, 0, "-s", iterator.readNext().?);
-    try std.testing.expect(null == iterator.readNext());
-}
-
 test tokenize {
-    var iterator = ArgIterator.initString(&.{ "--flag=value", "--long", "long_flag", "-a1", "-b", "2", "-cde3", "-fg", "4" });
-    const tokens = try tokenize(&iterator, std.testing.allocator);
+    var strs = it.StringIterator.init(&.{ "--flag=value", "--long", "long_flag", "-a1", "-b", "2", "-cde3", "-fg", "4" });
+    const tokens = try tokenize(&strs.iterator, std.testing.allocator);
     defer tokens.deinit();
 
     try std.testing.expectEqualStrings("flag", tokens.items[0].parameter.name);
