@@ -3,7 +3,7 @@ const it = @import("iterator.zig");
 
 pub const Token = union(enum) {
     value: []const u8,
-    short_or_value: []const u8,
+    short_chain: []const u8,
     parameter: struct { name: []const u8 },
 };
 
@@ -36,12 +36,9 @@ fn parseLongParam(argument: []const u8, tokens: *std.ArrayList(Token)) std.mem.A
 
 fn parseShortParam(argument: []const u8, tokens: *std.ArrayList(Token)) std.mem.Allocator.Error!void {
     if (argument.len == 1) {
-        try tokens.append(Token{ .parameter = .{ .name = argument[0..1] } });
+        try tokens.append(Token{ .parameter = .{ .name = argument } });
     } else {
-        for (0..argument.len - 1) |i| {
-            try tokens.append(Token{ .parameter = .{ .name = argument[i .. i + 1] } });
-        }
-        try tokens.append(Token{ .short_or_value = argument[argument.len - 1 ..] });
+        try tokens.append(Token{ .short_chain = argument });
     }
 }
 
@@ -56,18 +53,13 @@ test tokenize {
     try std.testing.expectEqualStrings("long", tokens.items[2].parameter.name);
     try std.testing.expectEqualStrings("long_flag", tokens.items[3].value);
 
-    try std.testing.expectEqualStrings("a", tokens.items[4].parameter.name);
-    try std.testing.expectEqualStrings("1", tokens.items[5].short_or_value);
+    try std.testing.expectEqualStrings("a132", tokens.items[4].short_chain);
 
-    try std.testing.expectEqualStrings("b", tokens.items[6].parameter.name);
-    try std.testing.expectEqualStrings("2", tokens.items[7].value);
+    try std.testing.expectEqualStrings("b", tokens.items[5].parameter.name);
+    try std.testing.expectEqualStrings("2", tokens.items[6].value);
 
-    try std.testing.expectEqualStrings("c", tokens.items[8].parameter.name);
-    try std.testing.expectEqualStrings("d", tokens.items[9].parameter.name);
-    try std.testing.expectEqualStrings("e", tokens.items[10].parameter.name);
-    try std.testing.expectEqualStrings("3", tokens.items[11].short_or_value);
+    try std.testing.expectEqualStrings("cde3", tokens.items[7].short_chain);
 
-    try std.testing.expectEqualStrings("f", tokens.items[12].parameter.name);
-    try std.testing.expectEqualStrings("g", tokens.items[13].short_or_value);
-    try std.testing.expectEqualStrings("4", tokens.items[14].value);
+    try std.testing.expectEqualStrings("fg", tokens.items[8].short_chain);
+    try std.testing.expectEqualStrings("4", tokens.items[9].value);
 }

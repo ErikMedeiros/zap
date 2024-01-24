@@ -20,7 +20,7 @@ pub fn main() !void {
         try switch (token) {
             .parameter => |p| stdout.print("[PARAMETER]: {s}\n", .{p.name}),
             .value => |v| stdout.print("[VALUE]: {s}\n", .{v}),
-            .short_or_value => |sov| stdout.print("[SHORT_OR_VALUE]: {s}\n", .{sov}),
+            .short_chain => |c| stdout.print("[SHORT_CHAIN]: {s}\n", .{c}),
         };
     }
 
