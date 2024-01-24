@@ -46,7 +46,7 @@ fn parseShortParam(argument: []const u8, tokens: *std.ArrayList(Token)) std.mem.
 }
 
 test tokenize {
-    var strs = it.StringIterator.init(&.{ "--flag=value", "--long", "long_flag", "-a1", "-b", "2", "-cde3", "-fg", "4" });
+    var strs = it.SliceIterator([:0]const u8).init(&.{ "--flag=value", "--long", "long_flag", "-a1", "-b", "2", "-cde3", "-fg", "4" });
     const tokens = try tokenize(&strs.iterator, std.testing.allocator);
     defer tokens.deinit();
 

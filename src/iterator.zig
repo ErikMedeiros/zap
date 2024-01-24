@@ -1,4 +1,5 @@
 const std = @import("std");
+const Token = @import("lexer.zig").Token;
 
 pub fn Iterator(comptime T: type) type {
     return struct {
@@ -58,26 +59,28 @@ pub const ArgIterator = struct {
     }
 };
 
-pub const StringIterator = struct {
-    text: []const [:0]const u8,
-    iterator: Iterator([:0]const u8),
-    index: ?usize = null,
+pub fn SliceIterator(comptime T: type) type {
+    return struct {
+        slice: []const T,
+        iterator: Iterator(T),
+        index: ?usize = null,
 
-    pub fn init(text: []const [:0]const u8) StringIterator {
-        return StringIterator{ .text = text, .iterator = .{ .nextFn = readNext, .peekFn = peekNext } };
-    }
+        pub fn init(slice: []const T) SliceIterator(T) {
+            return SliceIterator(T){ .slice = slice, .iterator = .{ .nextFn = readNext, .peekFn = peekNext } };
+        }
 
-    fn readNext(it: *Iterator([:0]const u8)) ?[:0]const u8 {
-        const self = @fieldParentPtr(StringIterator, "iterator", it);
-        const index = self.index orelse 0;
-        const next = if (index >= self.text.len) null else self.text[index];
-        self.index = index + 1;
-        return next;
-    }
+        fn readNext(it: *Iterator(T)) ?T {
+            const self = @fieldParentPtr(SliceIterator(T), "iterator", it);
+            const index = self.index orelse 0;
+            const next = if (index >= self.slice.len) null else self.slice[index];
+            self.index = index + 1;
+            return next;
+        }
 
-    fn peekNext(it: *Iterator([:0]const u8)) ?[:0]const u8 {
-        const self = @fieldParentPtr(StringIterator, "iterator", it);
-        const index = (self.index orelse 0) + 1;
-        return if (index >= self.text.len) null else self.text[index];
-    }
-};
+        fn peekNext(it: *Iterator(T)) ?T {
+            const self = @fieldParentPtr(SliceIterator(T), "iterator", it);
+            const index = self.index orelse 0;
+            return if (index >= self.slice.len) null else self.slice[index];
+        }
+    };
+}
